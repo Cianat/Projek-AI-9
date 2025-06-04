@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekomendasi Jenis Tanaman</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rekomendasi Jenis Tanaman</h1>
+            <p>Berdasarkan Karakteristik Lahan</p>
+        </header>
+        
+        <main>
+            <div class="input-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('recommend') }}" method="post">
+                    <div class="input-group">
+                        <label for="suhu">Rata-rata Suhu (°C):</label>
+                        <input type="number" id="suhu" name="suhu" step="0.1" placeholder="Masukkan suhu" 
+                               value="{{ input_values.suhu if input_values else '' }}" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="curah_hujan">Rata-rata Curah Hujan (mm):</label>
+                        <input type="number" id="curah_hujan" name="curah_hujan" step="0.1" placeholder="Masukkan curah hujan"
+                               value="{{ input_values.curah_hujan if input_values else '' }}" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="penyinaran">Rata-rata Lama Penyinaran Matahari (jam):</label>
+                        <input type="number" id="penyinaran" name="penyinaran" step="0.1" placeholder="Masukkan lama penyinaran"
+                               value="{{ input_values.penyinaran if input_values else '' }}" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ph">Rata-rata pH:</label>
+                        <input type="number" id="ph" name="ph" step="0.1" placeholder="Masukkan pH tanah"
+                               value="{{ input_values.ph if input_values else '' }}" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="kelembapan">Rata-rata Kelembapan Tanah:</label>
+                        <input type="number" id="kelembapan" name="kelembapan" step="0.1" placeholder="Masukkan kelembapan tanah"
+                               value="{{ input_values.kelembapan if input_values else '' }}" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ketinggian">Rata-rata Ketinggian Tanah:</label>
+                        <input type="number" id="ketinggian" name="ketinggian" step="0.1" placeholder="Masukkan ketinggian tanah"
+                               value="{{ input_values.ketinggian if input_values else '' }}" required>
+                    </div>
+                    
+                    <button type="submit">Dapatkan Rekomendasi</button>
+                </form>
+                
+                {% if recommendations %}
+                <div class="result-container">
+                    <h2>Hasil Rekomendasi:</h2>
+                    <div class="cluster-info">
+                        Cluster: {{ cluster }}
+                    </div>
+                    <div class="recommendations-list">
+                        <h3>Tanaman yang Direkomendasikan:</h3>
+                        <ul>
+                            {% for plant in recommendations %}
+                            <li>{{ plant }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 Rekomendasi Jenis Tanaman</p>
+        </footer>
+    </div>
+</body>
+</html> 
