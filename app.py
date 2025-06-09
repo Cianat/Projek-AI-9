@@ -6,54 +6,53 @@ from sklearn.preprocessing import MinMaxScaler
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Required for flash messages
+app.secret_key = 'your-secret-key-here'
 
 def calculate_recommendation(input_data):
     try:
-        # Read the dataset
+        # dataset
         file_path = 'Dataset.xlsx'
         df = pd.read_excel(file_path)
         
-        # Define feature columns
+        # feature columns
         feature_columns = [
             'Rata-rata Suhu (°C)', 'Rata-rata Curah Hujan (mm)', 
             'Rata-rata Lama Penyinaran Matahari (jam)', 'Rata-rata pH', 
             'Rata-rata Kelembapan Tanah', 'Rata-rata Ketinggian Tanah'
         ]
         
-        # Prepare data for clustering
+        # data untuk clustering
         data_for_clustering = df[feature_columns].copy()
         
-        # Normalize data
+        # normalize data
         scaler = MinMaxScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         
-        # Normalize input data using the same scaler
         input_normalized = scaler.transform([input_data])
         
-        # FCM parameters
+        # parameter FCM
         n_clusters = 3
         m = 2.0
         error = 0.001
         maxiter = 100
         
-        # Run FCM
+        # jalankan FCM
         cntr, u, _, _, _, _, _ = fuzz.cmeans(
             normalized_data.T, n_clusters, m, error=error, maxiter=maxiter, init=None, seed=42
         )
         
-        # Find the closest cluster for input data
+        # cari cluster yang paling masuk
         distances = np.zeros((input_normalized.shape[0], cntr.shape[0]))
         for i, center in enumerate(cntr):
             distances[:, i] = np.linalg.norm(input_normalized - center, axis=1)
         
-        closest_cluster = int(np.argmin(distances[0])) + 1  # Convert np.int64 to Python int
+        closest_cluster = int(np.argmin(distances[0])) + 1 
         
-        # Get plants from the same cluster
+        # tanaman dari cluster yang sama
         cluster_membership = np.argmax(u, axis=0)
         cluster_plants = df[cluster_membership == (closest_cluster - 1)]
         
-        # Return top 5 recommended plants
+        # output top 5 rekomendasi tanaman
         recommendations = cluster_plants['Nama Tanaman'].head(5).tolist()
         return recommendations, closest_cluster
         
@@ -68,7 +67,7 @@ def home():
 @app.route('/recommend', methods=['POST'])
 def recommend():
     try:
-        # Get form data
+        
         input_values = [
             float(request.form['suhu']),
             float(request.form['curah_hujan']),
