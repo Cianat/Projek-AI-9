@@ -11,7 +11,7 @@ def read_data_file(file_path):
     """
     _, file_extension = os.path.splitext(file_path)
     df = None
-    # Memperbarui daftar kolom yang diharapkan dengan nama kolom baru
+    # memperbarui daftar kolom dengan nama kolom baru
     expected_cols_subset = [
         'No', 'Nama Tanaman', 'Rata-rata Suhu (°C)', 'Rata-rata Curah Hujan (mm)', 
         'Rata-rata Lama Penyinaran Matahari (jam)', 'Rata-rata pH', 
@@ -31,15 +31,14 @@ def read_data_file(file_path):
                     print(f"Mencoba membaca Excel dengan header di baris ke-{header_row_index + 1} (indeks {header_row_index})...")
                     temp_df = pd.read_excel(file_path, header=header_row_index)
                     
-                    # Membersihkan spasi ekstra dari nama kolom
+                    # membersihkan spasi ekstra dari nama kolom
                     temp_df.columns = temp_df.columns.map(lambda x: x.strip() if isinstance(x, str) else x)
                     current_cols = temp_df.columns.tolist()
                     print(f"  Kolom terdeteksi pada percobaan ini: {current_cols}")
 
-                    # Memperbarui kondisi pengecekan header
-                    # Kita harapkan setidaknya beberapa dari kolom baru ini ada
+                    # memperbarui kondisi pengecekan header
                     is_likely_header = not all(str(col).startswith('Unnamed:') for col in current_cols) and \
-                                       sum(expected_col in current_cols for expected_col in expected_cols_subset) >= 5 # Minimal 5 kolom yang diharapkan cocok
+                                       sum(expected_col in current_cols for expected_col in expected_cols_subset) >= 5 # minimal 5 kolom yang diharapkan cocok
 
                     if is_likely_header:
                         df = temp_df
@@ -77,23 +76,23 @@ def read_data_file(file_path):
         return None
 
 
-def calculate_fcm_clusters(df, random_seed=42): # Tambahkan parameter random_seed
+def calculate_fcm_clusters(df, random_seed=42): # tambahkan parameter random_seed
     """
     Melakukan clustering FCM pada data tanaman dari DataFrame yang sudah dibaca.
     Menambahkan random_seed untuk hasil yang konsisten.
     """
     try:
-        # Setel seed untuk NumPy agar hasil FCM konsisten
+        # setel seed untuk NumPy agar hasil FCM konsisten
         np.random.seed(random_seed)
         print(f"\nMenggunakan random seed: {random_seed} untuk konsistensi hasil FCM.")
 
-        # Memperbarui daftar kolom fitur dengan nama kolom baru
+        # perbarui daftar kolom fitur dengan nama kolom baru
         feature_columns = [
             'Rata-rata Suhu (°C)', 'Rata-rata Curah Hujan (mm)', 
             'Rata-rata Lama Penyinaran Matahari (jam)', 'Rata-rata pH', 
             'Rata-rata Kelembapan Tanah', 'Rata-rata Ketinggian Tanah'
         ]
-        # Memperbarui kolom ID
+        # perbarui kolom ID
         id_columns = ['No', 'Nama Tanaman']
         all_needed_columns = id_columns + feature_columns
         
@@ -105,11 +104,11 @@ def calculate_fcm_clusters(df, random_seed=42): # Tambahkan parameter random_see
         data_for_clustering = df[feature_columns].copy()
         original_data_selected = df[all_needed_columns].copy()
 
-        # Konversi ke numerik dan tangani error
+        # konversi ke numerik dan tangani error
         for col in feature_columns:
             data_for_clustering[col] = pd.to_numeric(data_for_clustering[col], errors='coerce')
         
-        # Imputasi nilai NaN
+        # imputasi nilai NaN
         if data_for_clustering.isnull().any().any():
             print("Menangani nilai NaN yang ditemukan setelah konversi numerik:")
             for col in feature_columns:
@@ -126,14 +125,13 @@ def calculate_fcm_clusters(df, random_seed=42): # Tambahkan parameter random_see
             nan_cols_after_fill = data_for_clustering.columns[data_for_clustering.isnull().any()].tolist()
             raise ValueError(f"Masih ada nilai NaN di data setelah proses pengisian pada kolom: {nan_cols_after_fill}. Proses imputasi gagal. Periksa data sumber Anda.")
 
-        # Normalisasi data
+        # normalisasi data
         scaler = MinMaxScaler()
-        # Pastikan semua data numerik sebelum scaling
+        # memastikan semua data numerik sebelum scaling
         if not np.issubdtype(data_for_clustering.values.dtype, np.number) and not data_for_clustering.empty:
             all_numeric = True
             for col in data_for_clustering.columns:
                 try:
-                    # Coba konversi lagi untuk memastikan, meskipun seharusnya sudah di atas
                     pd.to_numeric(data_for_clustering[col])
                 except ValueError:
                     all_numeric = False
@@ -147,38 +145,38 @@ def calculate_fcm_clusters(df, random_seed=42): # Tambahkan parameter random_see
             
         normalized_data = scaler.fit_transform(data_for_clustering)
 
-        # Parameter FCM
+        # parameter FCM
         n_clusters = 3
         m = 2.0  # Fuzzyfier
-        error = 0.001  # Batas error untuk konvergensi
-        maxiter = 100  # Jumlah iterasi maksimum
+        error = 0.001  # batas error untuk konvergensi
+        maxiter = 100  # jumlah iterasi maksimum
 
-        # Transpose data untuk skfuzzy (membutuhkan fitur sebagai baris, sampel sebagai kolom)
+        # transpose data untuk skfuzzy (membutuhkan fitur sebagai baris, sampel sebagai kolom)
         data_transposed = normalized_data.T
 
-        # Validasi jumlah sampel vs jumlah cluster
+        # validasi jumlah sampel vs jumlah cluster
         if data_transposed.shape[1] < n_clusters:
             raise ValueError(f"Jumlah sampel data ({data_transposed.shape[1]}) lebih sedikit dari jumlah cluster yang diminta ({n_clusters}). Tidak dapat melanjutkan FCM.")
 
-        # Menjalankan FCM
+        # menjalankan FCM
         # `init=None` berarti inisialisasi acak, tetapi karena np.random.seed() sudah diatur,
         # "acak" ini akan konsisten.
         cntr, u, u0, d, jm, p, fpc = fuzz.cmeans(
             data_transposed, n_clusters, m, error=error, maxiter=maxiter, init=None, seed=random_seed # Tambahkan seed ke cmeans juga
         )
 
-        # Mendapatkan label cluster untuk setiap titik data
+        # mendapatkan label cluster untuk setiap titik data
         cluster_membership = np.argmax(u, axis=0)
 
-        # Membuat DataFrame hasil
+        # membuat DataFrame hasil
         results_df = original_data_selected.copy()
         
-        # Menambahkan kolom keanggotaan untuk setiap cluster
+        # menambahkan kolom keanggotaan untuk setiap cluster
         for i in range(n_clusters):
             results_df[f'Membership_Cluster_{i+1}'] = u[i, :]
-        results_df['Assigned_Cluster'] = cluster_membership + 1 # Tambah 1 agar cluster dimulai dari 1
+        results_df['Assigned_Cluster'] = cluster_membership + 1 # tambah 1 agar cluster dimulai dari 1
 
-        # Mengembalikan pusat cluster ke skala asli
+        # mengembalikan pusat cluster ke skala asli
         original_scale_centers = scaler.inverse_transform(cntr)
         centers_df = pd.DataFrame(original_scale_centers, columns=feature_columns)
         
@@ -196,29 +194,29 @@ def calculate_fcm_clusters(df, random_seed=42): # Tambahkan parameter random_see
     except Exception as e:
         print(f"Terjadi error yang tidak terduga saat clustering: {e}")
         import traceback
-        traceback.print_exc() # Mencetak traceback untuk debugging lebih detail
+        traceback.print_exc() # mencetak traceback untuk debugging lebih detail
         return None, None
 
 # --- Penggunaan Fungsi ---
-file_path = 'Dataset.xlsx' # Pastikan file ini ada di direktori yang sama atau berikan path lengkap
+file_path = 'Dataset.xlsx'
 dataframe = read_data_file(file_path)
 
 if dataframe is not None:
-    # Memperbarui daftar kolom yang dibutuhkan untuk pengecekan sebelum clustering
+    # memperbarui daftar kolom yang dibutuhkan untuk pengecekan sebelum clustering
     required_cols_for_clustering = [
         'No', 'Nama Tanaman', 'Rata-rata Suhu (°C)', 'Rata-rata Curah Hujan (mm)', 
         'Rata-rata Lama Penyinaran Matahari (jam)', 'Rata-rata pH', 
         'Rata-rata Kelembapan Tanah', 'Rata-rata Ketinggian Tanah'
     ]
-    # Periksa apakah semua kolom yang dibutuhkan ada di DataFrame
+    # periksa apakah semua kolom yang dibutuhkan ada di DataFrame
     if all(col in dataframe.columns for col in required_cols_for_clustering):
         print("\nMemulai proses clustering dengan nama kolom baru...")
-        # Panggil dengan random_seed yang spesifik, misalnya 42
+        # panggil dengan random_seed yang spesifik, misalnya 42
         results_df, cluster_centers_df = calculate_fcm_clusters(dataframe, random_seed=42) 
         if results_df is not None:
             print("\n--- Hasil Clustering FCM ---")
-            pd.set_option('display.max_columns', None) # Tampilkan semua kolom
-            pd.set_option('display.width', 1200) # Lebar tampilan output
+            pd.set_option('display.max_columns', None) # menampilkan semua kolom
+            pd.set_option('display.width', 1200) # lebar tampilan output
             print(results_df)
     else:
         print(f"\nGAGAL melanjutkan ke clustering karena kolom yang dibutuhkan tidak lengkap setelah pembacaan file.")
