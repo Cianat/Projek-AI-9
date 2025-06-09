@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import skfuzzy.cluster as fuzz
 from sklearn.preprocessing import MinMaxScaler
-from scipy.spatial.distance import cdist # Untuk menghitung jarak Euclidean
+from scipy.spatial.distance import cdist # untuk menghitung jarak Euclidean
 import os
 import traceback
 
@@ -145,7 +145,7 @@ def get_user_input(feature_columns):
     for col in feature_columns:
         while True:
             try:
-                # Membersihkan nama kolom untuk tampilan input yang lebih baik
+                # membersihkan nama kolom untuk tampilan input yang lebih baik
                 prompt_message = col.replace('Rata-rata', '').replace('()', '').strip()
                 value = float(input(f"Masukkan {prompt_message}: "))
                 user_data[col] = value
@@ -216,10 +216,10 @@ def main():
     print("Pusat cluster (centroid) yang digunakan untuk acuan rekomendasi:")
     print(cluster_centers_df.round(2))
 
-    # Ekstrak nama kolom fitur yang digunakan untuk clustering
+    # ekstrak nama kolom fitur yang digunakan untuk clustering
     feature_columns = cluster_centers_df.columns.tolist()
 
-    # --- Langkah 2: Loop interaktif untuk rekomendasi kepada pengguna ---
+    # --- Langkah 2: Loop untuk rekomendasi kepada pengguna ---
     while True:
         user_input_df = get_user_input(feature_columns)
         
@@ -227,7 +227,7 @@ def main():
         
         recommend_plants(best_cluster_index, results_df)
         
-        # Tanya pengguna apakah ingin mencoba lagi
+        # tanya pengguna apakah ingin mencoba lagi
         another_go = input("\nApakah Anda ingin mencoba dengan data lain? (y/n): ").lower()
         if another_go != 'y':
             print("\nTerima kasih telah menggunakan sistem rekomendasi. Sampai jumpa! 👋")
