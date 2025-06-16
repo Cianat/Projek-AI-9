@@ -62,14 +62,17 @@
                                value="{{ input_values.ketinggian if input_values else '' }}" required>
                     </div>
                     
-                    <button type="submit">Dapatkan Rekomendasi</button>
+                    <div class="button-group">
+                        <button type="submit">Dapatkan Rekomendasi</button>
+                        <button type="button" class="button-secondary" onclick="window.location.href='/'">Reset</button>
+                    </div>
                 </form>
                 
                 {% if recommendations %}
                 <div class="result-container">
                     <h2>Hasil Rekomendasi:</h2>
                     <div class="cluster-info">
-                        Cluster: {{ cluster }}
+                        Kelompok: {{ cluster }}
                     </div>
                     <div class="recommendations-list">
                         <h3>Tanaman yang Direkomendasikan:</h3>
@@ -89,4 +92,4 @@
         </footer>
     </div>
 </body>
-</html> 
+</html>
