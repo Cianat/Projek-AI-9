@@ -5,8 +5,6 @@ import numpy as np
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
-# --- BAGIAN 1: FUNGSI KEANGGOTAAN (SUDAH AKURAT) ---
-
 def suhu_membership(x):
     if x <= 20:
         rendah = 1.0
@@ -133,15 +131,11 @@ def ketinggian_membership(x):
         tinggi = 1.0
     return {'Rendah': rendah, 'Sedang': sedang, 'Tinggi': tinggi}
 
-
-# --- BAGIAN 2: IMPLEMENTASI ATURAN FUZZY (81 ATURAN FINAL) ---
-
 def evaluate_rules(inputs):
     print("\n" + "="*50)
     print("MEMULAI PROSES DEBUGGING ATURAN FUZZY (81 ATURAN FINAL)")
     print("="*50)
 
-    # Fuzzifikasi
     suhu = suhu_membership(inputs['suhu'])
     hujan = curah_hujan_membership(inputs['curah_hujan'])
     sinar = penyinaran_membership(inputs['penyinaran'])
@@ -157,9 +151,7 @@ def evaluate_rules(inputs):
     print(f"  Kelembapan ({inputs['kelembapan']}): {lembab}")
     print(f"  Ketinggian ({inputs['ketinggian']}): {tinggi}")
     
-    # Hitung kekuatan setiap aturan sesuai 81 aturan baru
     r = {}
-    # Suhu Rendah
     r[1]  = min(suhu['Rendah'], hujan['Rendah'], tinggi['Rendah'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[2]  = min(suhu['Rendah'], hujan['Rendah'], tinggi['Rendah'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[3]  = min(suhu['Rendah'], hujan['Rendah'], tinggi['Rendah'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
@@ -187,7 +179,6 @@ def evaluate_rules(inputs):
     r[25] = min(suhu['Rendah'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[26] = min(suhu['Rendah'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[27] = min(suhu['Rendah'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
-    # Suhu Sedang
     r[28] = min(suhu['Sedang'], hujan['Rendah'], tinggi['Rendah'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[29] = min(suhu['Sedang'], hujan['Rendah'], tinggi['Rendah'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[30] = min(suhu['Sedang'], hujan['Rendah'], tinggi['Rendah'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
@@ -215,7 +206,6 @@ def evaluate_rules(inputs):
     r[52] = min(suhu['Sedang'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[53] = min(suhu['Sedang'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[54] = min(suhu['Sedang'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
-    # Suhu Tinggi
     r[55] = min(suhu['Tinggi'], hujan['Rendah'], tinggi['Rendah'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[56] = min(suhu['Tinggi'], hujan['Rendah'], tinggi['Rendah'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[57] = min(suhu['Tinggi'], hujan['Rendah'], tinggi['Rendah'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
@@ -243,31 +233,22 @@ def evaluate_rules(inputs):
     r[79] = min(suhu['Tinggi'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Rendah'], ph['Netral'], lembab['Sedang'])
     r[80] = min(suhu['Tinggi'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Sedang'], ph['Netral'], lembab['Sedang'])
     r[81] = min(suhu['Tinggi'], hujan['Tinggi'], tinggi['Tinggi'], sinar['Tinggi'], ph['Netral'], lembab['Sedang'])
-    # Aturan R4 (pH Basa) dan aturan lain yang mungkin menggunakan pH Asam/Basa atau Kelembaban selain Sedang, belum ditambahkan ke daftar ini
-    # Jika ada aturan dengan pH atau Kelembaban berbeda, tambahkan di sini
 
     print("\n[LANGKAH 2: KEKUATAN SETIAP ATURAN (R1-R81)]")
     for i in range(1, 82):
-        print(f"  Kekuatan Aturan R{i}: {r.get(i, 'N/A')}") # Dihapus .4f untuk menghindari error jika N/A
+        print(f"  Kekuatan Aturan R{i}: {r.get(i, 'N/A')}") 
 
-    # Agregasi aturan ke kelompok sesuai 81 aturan baru
     kelompok_strength = {1: 0, 2: 0, 3: 0}
     kelompok_strength[1] = max(r[30], r[33], r[39], r[42], r[56], r[57], r[58], r[59], r[60], r[61], r[62], r[63], r[65], r[66], r[67], r[68], r[69], r[70], r[71], r[72], r[77], r[78], r[79], r[80], r[81])
     kelompok_strength[2] = max(r[7], r[8], r[9], r[16], r[17], r[18], r[25], r[26], r[27])
-    # Aturan R3 dan R4 belum dimasukkan ke kelompok manapun karena ada keraguan dari daftar sebelumnya. Sesuai daftar baru:
-    # R3 -> Kelompok 3
-    # R4 -> (tidak ada di daftar 81, tapi dari daftar lama itu Kelompok 2)
-    # Mari asumsikan daftar 81 adalah yang paling benar.
+    
     kelompok_strength[3] = max(r[1], r[2], r[3], r[5], r[6], r[10], r[11], r[12], r[13], r[14], r[15], r[19], r[20], r[21], r[22], r[23], r[24], r[28], r[29], r[31], r[32], r[34], r[35], r[36], r[37], r[38], r[40], r[41], r[43], r[44], r[45], r[46], r[47], r[48], r[49], r[50], r[51], r[52], r[53], r[54], r[55], r[64], r[73], r[74], r[75], r[76])
-    # Aturan R4 dari daftar lama (pH Basa) tidak ada di daftar 81 ini. Jika ingin ditambahkan, bisa ditaruh di kelompok 2
-    # kelompok_strength[2] = max(kelompok_strength[2], r[...]) 
 
     print("\n[LANGKAH 3: KEKUATAN AKHIR SETIAP KELOMPOK]")
     print(f"  Kekuatan Kelompok 1: {kelompok_strength[1]:.4f}")
     print(f"  Kekuatan Kelompok 2: {kelompok_strength[2]:.4f}")
     print(f"  Kekuatan Kelompok 3: {kelompok_strength[3]:.4f}")
 
-    # Defuzzifikasi
     if max(kelompok_strength.values()) == 0:
         print("\n--> KESIMPULAN: Semua kekuatan kelompok bernilai 0. Tidak ada aturan yang cocok.")
         print("="*50 + "\n")
@@ -278,8 +259,6 @@ def evaluate_rules(inputs):
     print("="*50 + "\n")
     return best_cluster
 
-
-# --- BAGIAN 3: REKOMENDASI (TETAP SAMA) ---
 def get_plant_recommendations(cluster):
     plant_mapping = {
         1: ['Kacang Tanah', 'Kacang Hijau', 'Jagung', 'Cabai', 'Bawang Merah'],
@@ -288,8 +267,6 @@ def get_plant_recommendations(cluster):
     }
     return plant_mapping.get(cluster, [])
 
-
-# --- ROUTING APLIKASI FLASK (TETAP SAMA) ---
 @app.route('/')
 def home():
     return render_template('index.html')
