@@ -2,20 +2,11 @@ import pandas as pd
 import numpy as np
 import skfuzzy.cluster as fuzz
 from sklearn.preprocessing import MinMaxScaler
-from scipy.spatial.distance import cdist # untuk menghitung jarak Euclidean
+from scipy.spatial.distance import cdist
 import os
 import traceback
 
-# =============================================================================
-# BAGIAN 1: FUNGSI-FUNGSI DARI SCRIPT ASLI (fcm_script.py)
-# Fungsi-fungsi ini disalin langsung untuk membaca data dan melakukan clustering.
-# =============================================================================
-
 def read_data_file(file_path):
-    """
-    Membaca data dari file .csv atau .xlsx secara otomatis,
-    dengan penanganan header yang lebih baik dan debugging untuk .xlsx.
-    """
     _, file_extension = os.path.splitext(file_path)
     df = None
     expected_cols_subset = [
@@ -69,9 +60,6 @@ def read_data_file(file_path):
         return None
 
 def calculate_fcm_clusters(df):
-    """
-    Melakukan clustering FCM pada data tanaman dari DataFrame yang sudah dibaca.
-    """
     try:
         feature_columns = [
             'Rata-rata Suhu (°C)', 'Rata-rata Curah Hujan (mm)', 
@@ -129,15 +117,7 @@ def calculate_fcm_clusters(df):
         traceback.print_exc()
         return None, None
 
-# =============================================================================
-# BAGIAN 2: FUNGSI BARU UNTUK SISTEM REKOMENDASI
-# =============================================================================
-
 def get_user_input(feature_columns):
-    """
-    Meminta pengguna untuk memasukkan data kondisi lingkungan dan memvalidasinya.
-    Mengembalikan DataFrame pandas dengan data dari pengguna.
-    """
     print("\n" + "="*40)
     print(" SILAKAN MASUKKAN KONDISI LAHAN ANDA ".center(40, "="))
     print("="*40)
@@ -145,7 +125,6 @@ def get_user_input(feature_columns):
     for col in feature_columns:
         while True:
             try:
-                # membersihkan nama kolom untuk tampilan input yang lebih baik
                 prompt_message = col.replace('Rata-rata', '').replace('()', '').strip()
                 value = float(input(f"Masukkan {prompt_message}: "))
                 user_data[col] = value
@@ -155,21 +134,11 @@ def get_user_input(feature_columns):
     return pd.DataFrame([user_data])
 
 def find_best_cluster(user_input_df, centers_df):
-    """
-    Menemukan cluster terdekat dengan input pengguna menggunakan Jarak Euclidean.
-    Mengembalikan indeks dari cluster terbaik (dimulai dari 0).
-    """
-    # Menghitung jarak Euclidean dari input pengguna ke setiap pusat cluster
     distances = cdist(user_input_df.values, centers_df.values, 'euclidean')
-    # Mencari indeks cluster dengan jarak minimum
     best_cluster_index = np.argmin(distances)
     return best_cluster_index
 
 def recommend_plants(best_cluster_index, results_df):
-    """
-    Memberikan rekomendasi tanaman dari cluster yang paling cocok.
-    """
-    # Nomor cluster di 'Assigned_Cluster' adalah 1-based (1, 2, 3, ...)
     best_cluster_number = best_cluster_index + 1
     
     print("\n" + "="*40)
@@ -177,26 +146,16 @@ def recommend_plants(best_cluster_index, results_df):
     print("="*40)
     print(f"✅ Kondisi Anda paling cocok dengan karakteristik Cluster {best_cluster_number}.")
     
-    # Filter hasil untuk mendapatkan tanaman yang termasuk dalam cluster terbaik
     recommended_plants_df = results_df[results_df['Assigned_Cluster'] == best_cluster_number]
     
     if recommended_plants_df.empty:
         print("Tidak ada tanaman yang ditemukan untuk cluster ini.")
     else:
         print("\n🌱 Tanaman yang cocok untuk ditanam di lokasi Anda adalah:")
-        # Cetak daftar nama tanaman
         for plant_name in recommended_plants_df['Nama Tanaman']:
             print(f"   - {plant_name}")
 
-# =============================================================================
-# BAGIAN 3: FUNGSI UTAMA UNTUK MENJALANKAN PROGRAM
-# =============================================================================
-
 def main():
-    """
-    Fungsi utama untuk menjalankan sistem rekomendasi tanaman.
-    """
-    # --- Langkah 1: Jalankan clustering FCM awal untuk membangun model ---
     file_path = 'Dataset.xlsx' 
     print(f"Membaca dan memproses data dari '{file_path}' untuk membangun model cluster...")
     
@@ -216,10 +175,8 @@ def main():
     print("Pusat cluster (centroid) yang digunakan untuk acuan rekomendasi:")
     print(cluster_centers_df.round(2))
 
-    # ekstrak nama kolom fitur yang digunakan untuk clustering
     feature_columns = cluster_centers_df.columns.tolist()
 
-    # --- Langkah 2: Loop untuk rekomendasi kepada pengguna ---
     while True:
         user_input_df = get_user_input(feature_columns)
         
@@ -227,7 +184,6 @@ def main():
         
         recommend_plants(best_cluster_index, results_df)
         
-        # tanya pengguna apakah ingin mencoba lagi
         another_go = input("\nApakah Anda ingin mencoba dengan data lain? (y/n): ").lower()
         if another_go != 'y':
             print("\nTerima kasih telah menggunakan sistem rekomendasi. Sampai jumpa! 👋")
